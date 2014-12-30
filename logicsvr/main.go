@@ -9,12 +9,16 @@ import (
 	"fmt"
 	"time"
 	"math/rand"
+	"os"
 	common "github.com/ro4tub/docker_learning/common"
 )
 
 // Command-line flags.
 var (
 	bind   = flag.String("bind", ":9527", "Listen Address")
+    ip     = os.Getenv("REDIS_PORT_6379_TCP_ADDR")
+    port   = os.Getenv("REDIS_PORT_6379_TCP_PORT")
+    db     = flag.String("db", ":6379", "redis db address")
 )
 
 // gatesvr转发来消息
@@ -22,7 +26,7 @@ type GameService struct {
 }
 
 func (r *GameService) createPlayerRedis(name string) (int64, error) {
-    conn, err := redis.Dial("tcp", ":6379")
+    conn, err := redis.Dial("tcp", *db)
     if err != nil {
         return -1, err
     }
@@ -47,6 +51,7 @@ func (r *GameService) CreatePlayer(req *common.CreatePlayerMsgReq, ack *common.C
 	log.Printf("CreatePlayer: %s\n", req.Name)
 	id, err := r.createPlayerRedis(req.Name)
 	if err != nil {
+        log.Printf("db access failed: %v", err)
 		ack.Ret = common.InternalErr
 		ack.PlayerId = -1
 		return common.ErrNotFoundPlayer
@@ -58,7 +63,7 @@ func (r *GameService) CreatePlayer(req *common.CreatePlayerMsgReq, ack *common.C
 
 
 func (r *GameService) getFightValueByIdRedis(id int64) (int, error) {
-    conn, err := redis.Dial("tcp", ":6379")
+    conn, err := redis.Dial("tcp", *db)
     if err != nil {
         return -1, err
     }
@@ -121,6 +126,8 @@ func rpcListen(remoteip string) {
 
 func main() {
 	flag.Parse()
+    log.Printf("redis addr: %s:%s\n", ip, port)
+    log.Printf("db: %s\n", *db)
 	rand.Seed(time.Now().UnixNano())
 	if err := InitRpc(); err != nil {
 		panic(err)
