@@ -1,0 +1,3 @@
+http://localhost:8080/game/?msg=1&name=foobar
+http://localhost:8080/game/?msg=1&name=oscar
+http://localhost:8080/game/?msg=2&pid1=1000&pid2=10001
